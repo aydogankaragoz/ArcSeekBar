@@ -40,6 +40,14 @@ class ArcSeekBar @JvmOverloads constructor(
             invalidate()
         }
 
+    var middle: Int = a.useOrDefault(0) { getInteger(R.styleable.ArcSeekBar_middle, it) }
+        set(middle) {
+            field = bound(0, middle, maxProgress)
+            onProgressChangedListener?.invoke(middle)
+            drawData?.let { drawData = it.copy(middle = middle) }
+            invalidate()
+        }
+
     var progressWidth: Float = a.useOrDefault(4 * context.resources.displayMetrics.density) { getDimension(R.styleable.ArcSeekBar_progressWidth, it) }
         set(value) {
             field = value
@@ -56,6 +64,13 @@ class ArcSeekBar @JvmOverloads constructor(
         get() = progressPaint.color
         set(color) {
             progressPaint.color = color
+            invalidate()
+        }
+
+    var progressMiddleColor: Int
+        get() = progressMiddlePaint.color
+        set(color) {
+            progressMiddlePaint.color = color
             invalidate()
         }
 
@@ -82,6 +97,11 @@ class ArcSeekBar @JvmOverloads constructor(
 
     private var progressBackgroundPaint: Paint = makeProgressPaint(
             color = a.useOrDefault(resources.getColor(android.R.color.darker_gray)) { getColor(R.styleable.ArcSeekBar_progressBackgroundColor, it) },
+            width = progressBackgroundWidth
+    )
+
+    private var progressMiddlePaint: Paint = makeProgressPaint(
+            color = a.useOrDefault(resources.getColor(android.R.color.holo_red_dark)) { getColor(R.styleable.ArcSeekBar_progressMiddleColor, it) },
             width = progressBackgroundWidth
     )
 
@@ -113,6 +133,8 @@ class ArcSeekBar @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         drawData?.run {
             canvas.drawArc(arcRect, startAngle, sweepAngle, false, progressBackgroundPaint)
+            //canvas.drawArc(arcRect, startAngle, 150.toFloat(), false, progressMiddlePaint)
+            canvas.drawArc(arcRect, startAngle, middleSweepAngle, false, progressMiddlePaint)
             canvas.drawArc(arcRect, startAngle, progressSweepAngle, false, progressPaint)
             if (mEnabled) drawThumb(canvas)
         }
@@ -133,7 +155,7 @@ class ArcSeekBar @JvmOverloads constructor(
         val dy = maxOf(thumb.intrinsicHeight.toFloat() / 2, this.progressWidth) + 2
         val realWidth = width.toFloat() - 2 * dx - paddingLeft - paddingRight
         val realHeight = minOf(height.toFloat() - 2 * dy - paddingTop - paddingBottom, realWidth / 2)
-        drawData = ArcSeekBarData(dx + paddingLeft, dy + paddingTop, realWidth, realHeight, progress, maxProgress)
+        drawData = ArcSeekBarData(dx + paddingLeft, dy + paddingTop, realWidth, realHeight, progress, middle, maxProgress)
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
 
